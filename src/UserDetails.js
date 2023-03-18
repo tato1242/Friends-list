@@ -1,44 +1,41 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 
-function UserDetails() {
+function UserDetails({ friends }) {
   const { userId } = useParams();
-  const [user, setUser] = useState(null);
-  const [friends, setFriends] = useState([]);
+  const [userDetails, setUserDetails] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
-      const userResponse = await fetch(
-        `http://sweeftdigital-intern.eu-central-1.elasticbeanstalk.com/user/${userId}`
-      );
-      const userData = await userResponse.json();
-      setUser(userData);
-
-      const friendsResponse = await fetch(
-        `http://sweeftdigital-intern.eu-central-1.elasticbeanstalk.com/user/${userId}/friends/0/10`
-      );
-      const friendsData = await friendsResponse.json();
-      setFriends(friendsData);
+      try {
+        const userResponse = await fetch(
+          `http://sweeftdigital-intern.eu-central-1.elasticbeanstalk.com/user/${userId}`
+        );
+        if (!userResponse.ok) {
+          throw new Error("Network response was not ok");
+        }
+        const userData = await userResponse.json();
+        setUserDetails(userData);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
     };
+
     fetchData();
   }, [userId]);
 
-  if (!user) {
+  if (!userDetails) {
     return <div>Loading...</div>;
   }
 
-  if (!user) {
-    return <div>Loading...</div>;
-  }
-
-  console.log("Friends array:", friends);
+  const { name, email, phone } = userDetails;
 
   return (
     <div>
       <h1>User Details</h1>
-      <p>Name: {user.name}</p>
-      <p>Email: {user.email}</p>
-      <p>Phone: {user.phone}</p>
+      <p>Name: {name}</p>
+      <p>Email: {email}</p>
+      <p>Phone: {phone}</p>
       <h2>Friends List</h2>
       <ul>
         {friends.map((friend) => (

@@ -1,41 +1,48 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import FriendsList from "./FriendsList";
 import UserDetails from "./UserDetails";
-import { useState } from "react";
 
 function App() {
   const [friends, setFriends] = useState(null);
   const [userDetails, setUserDetails] = useState(null);
+  const [selectedUserId, setSelectedUserId] = useState(null);
+  const [imageUrl, setImageUrl] = useState("");
 
-  const handleFriendClick = (userId) => {
-    fetch(
-      `http://sweeftdigital-intern.eu-central-1.elasticbeanstalk.com/user/${userId}/friends/0/10`
-    )
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("Friends data:", data);
-        setFriends(data);
-      });
-    fetch(
-      `http://sweeftdigital-intern.eu-central-1.elasticbeanstalk.com/user/${userId}`
-    )
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("User details:", data);
-        setUserDetails(data);
-      });
+  const handleFriendClick = async (userId) => {
+    try {
+      const friendsResponse = await fetch(
+        `http://sweeftdigital-intern.eu-central-1.elasticbeanstalk.com/user/${userId}/friends/{page}/{size}`
+      );
+      const friendsData = await friendsResponse.json();
+      setFriends(friendsData);
+
+      const userDetailsResponse = await fetch(
+        `http://sweeftdigital-intern.eu-central-1.elasticbeanstalk.com/user/${userId}`
+      );
+      const userDetailsData = await userDetailsResponse.json();
+      setUserDetails(userDetailsData);
+      setSelectedUserId(userId);
+
+      const imageResponse = await fetch(
+        `http://placeimg.com/640/480/animals?v=${userId}`
+      );
+      const blob = await imageResponse.blob();
+      setImageUrl(URL.createObjectURL(blob));
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (
     <div>
-      <h1>Friends List</h1>
-      {friends ? (
-        <FriendsList onFriendClick={handleFriendClick} friends={friends} />
-      ) : (
-        <div>Loading friends list...</div>
-      )}
-      {userDetails && (
-        <UserDetails userDetails={userDetails} friends={friends} />
+      <FriendsList onFriendClick={handleFriendClick} friends={friends} />
+
+      {selectedUserId && userDetails && (
+        <UserDetails
+          userDetails={userDetails}
+          friends={friends}
+          imageUrl={imageUrl}
+        />
       )}
     </div>
   );
